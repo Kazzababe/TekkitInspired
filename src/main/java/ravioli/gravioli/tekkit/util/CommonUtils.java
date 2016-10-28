@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 public class CommonUtils {
     public static String locationToString(Location location) {
@@ -63,17 +64,22 @@ public class CommonUtils {
     }
 
     public static void minMaxCorners(Location c1, Location c2) {
-        Location min = new Location(c1.getWorld(),
+        Vector min = new Vector(
                 Math.min(c1.getBlockX(), c2.getBlockX()),
                 Math.min(c1.getBlockY(), c2.getBlockY()),
                 Math.min(c1.getBlockZ(), c2.getBlockZ()));
-        Location max = new Location(c1.getWorld(),
+        Vector max = new Vector(
                 Math.max(c1.getBlockX(), c2.getBlockX()),
                 Math.max(c1.getBlockY(), c2.getBlockY()),
                 Math.max(c1.getBlockZ(), c2.getBlockZ()));
 
-        c1 = min;
-        c2 = max;
+        c1.setX(min.getX());
+        c1.setY(min.getY());
+        c1.setZ(min.getZ());
+
+        c2.setX(max.getX());
+        c2.setY(max.getY());
+        c2.setZ(max.getZ());
     }
 
     public static ArrayList<Location> getPointsInRegion(Location c1, Location c2) {

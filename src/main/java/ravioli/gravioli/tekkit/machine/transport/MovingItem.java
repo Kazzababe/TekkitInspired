@@ -22,7 +22,7 @@ public class MovingItem {
         this.location.add(0.5 * input.getModX(), 0.5 * input.getModY(), 0.5 * input.getModZ());
         this.input = input;
 
-        this.armorStand = (ArmorStand) location.getWorld().spawnEntity(this.location.clone().add(0, -0.88, 0), EntityType.ARMOR_STAND);
+        this.armorStand = (ArmorStand) location.getWorld().spawnEntity(this.location.clone().add(0, item.getType().isSolid()? -0.88 : -1.18, 0), EntityType.ARMOR_STAND);
         this.armorStand.setGravity(false);
         this.armorStand.setCustomName(item != null ? item.getType().name() : "AIR");
         this.armorStand.setCustomNameVisible(false);
@@ -33,11 +33,19 @@ public class MovingItem {
         this.armorStand.setHelmet(item);
         this.armorStand.setBasePlate(false);
         this.armorStand.setMetadata("display", new FixedMetadataValue(Tekkit.getInstance(), this));
+
+        this.moveTo(this.location);
     }
 
     public void moveTo(Location location) {
         this.location = location;
-        this.armorStand.teleport(location.clone().add(0, -0.88, 0));
+
+        // The below doesn't really appear to actually work
+        if (this.item.getType().isSolid()) {
+            this.armorStand.teleport(location.clone().add(0, -0.88, 0));
+        } else {
+            this.armorStand.teleport(location.clone().add(0, -1.13, 0));
+        }
     }
 
     public ItemStack getItem() {

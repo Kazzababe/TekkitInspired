@@ -26,6 +26,7 @@ public abstract class MachineWithInventory extends MachineBase {
         this.inventory = Bukkit.createInventory(null, size, name);
     }
 
+    @Override
     public ArrayList<ItemStack> getDrops() {
         ArrayList<ItemStack> drops = new ArrayList();
         ArrayList<ItemStack> inventoryDrops = new ArrayList(Arrays.asList(this.inventory.getContents()));

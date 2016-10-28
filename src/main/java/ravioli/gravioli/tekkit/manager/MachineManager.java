@@ -1,40 +1,36 @@
 package ravioli.gravioli.tekkit.manager;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.inventory.Recipe;
 import ravioli.gravioli.tekkit.Tekkit;
-import ravioli.gravioli.tekkit.machine.Machine;
 import ravioli.gravioli.tekkit.machine.MachineBase;
 
 public class MachineManager {
     private static Set<MachineBase> registeredMachines = new HashSet<MachineBase>();
-    private Set<MachineBase> machines = new HashSet<MachineBase>();
+    private HashMap<Location, MachineBase> machines = new HashMap<Location, MachineBase>();
 
     public void addMachine(MachineBase machine) {
-        this.machines.add(machine);
+        this.machines.put(machine.getLocation(), machine);
     }
 
     public void removeMachine(MachineBase machine) {
         this.machines.remove(machine);
     }
 
+    public boolean isMachine(Location location) {
+        return this.machines.containsKey(location);
+    }
+
     public MachineBase getMachineByLocation(Location location) {
-        for (MachineBase machine : this.machines) {
-            MachineBase realMachine = machine;
-            if (!realMachine.getLocation().equals(location)) continue;
-            return realMachine;
-        }
-        return null;
+        return this.machines.get(location);
     }
 
     public <T extends MachineBase> T getMachineByLocation(Location location, Class<T> type) {
-        Optional<MachineBase> optional = this.machines.stream().filter(machine -> machine.getClass().isAssignableFrom(type) && machine.getLocation().equals(location)).findFirst();
-        if (optional.isPresent()) {
-            return (T) optional.get();
+        MachineBase machine = this.machines.get(location);
+        if (machine != null && machine.getClass().isAssignableFrom(type)) {
+            return (T) machine;
         }
         return null;
     }
@@ -50,7 +46,7 @@ public class MachineManager {
         return registeredMachines;
     }
 
-    public Set<MachineBase> getMachines() {
-        return this.machines;
+    public Collection<MachineBase> getMachines() {
+        return this.machines.values();
     }
 }

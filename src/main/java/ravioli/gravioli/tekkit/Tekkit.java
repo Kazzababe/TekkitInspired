@@ -5,15 +5,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import ravioli.gravioli.tekkit.listeners.MachineListeners;
 import ravioli.gravioli.tekkit.machine.MachineBase;
-import ravioli.gravioli.tekkit.machine.machines.MachineBlockBreaker;
-import ravioli.gravioli.tekkit.machine.machines.MachineFilter;
-import ravioli.gravioli.tekkit.machine.machines.MachineMiningWell;
-import ravioli.gravioli.tekkit.machine.machines.MachineQuarry;
-import ravioli.gravioli.tekkit.machine.machines.MachineTimer;
-import ravioli.gravioli.tekkit.machine.transport.pipes.PipeDiamond;
-import ravioli.gravioli.tekkit.machine.transport.pipes.PipeGold;
-import ravioli.gravioli.tekkit.machine.transport.pipes.PipeIron;
-import ravioli.gravioli.tekkit.machine.transport.pipes.PipeSimple;
+import ravioli.gravioli.tekkit.machine.machines.*;
+import ravioli.gravioli.tekkit.machine.transport.pipes.*;
 import ravioli.gravioli.tekkit.manager.MachineManager;
 import ravioli.gravioli.tekkit.storage.Sqlite;
 
@@ -42,8 +35,10 @@ public class Tekkit extends JavaPlugin {
         MachineManager.registerMachine(new PipeSimple());
         MachineManager.registerMachine(new PipeIron());
         MachineManager.registerMachine(new PipeGold());
+        MachineManager.registerMachine(new PipeVoid());
         MachineManager.registerMachine(new PipeDiamond());
         MachineManager.registerMachine(new MachineQuarry());
+        MachineManager.registerMachine(new MachineCropomatic());
 
         this.getServer().getPluginManager().registerEvents(new MachineListeners(this), this);
     }

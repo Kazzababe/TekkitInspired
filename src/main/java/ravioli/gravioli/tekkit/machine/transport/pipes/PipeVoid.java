@@ -1,18 +1,21 @@
 package ravioli.gravioli.tekkit.machine.transport.pipes;
 
-import java.util.ArrayList;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import ravioli.gravioli.tekkit.machine.transport.MovingItem;
 import ravioli.gravioli.tekkit.machine.transport.Pipe;
 import ravioli.gravioli.tekkit.machine.transport.PipeTransportGeneric;
 
-public class PipeIron extends Pipe {
-    public PipeIron() {
+import java.util.ArrayList;
+
+public class PipeVoid extends Pipe {
+    public PipeVoid() {
         super(new PipeTransportGeneric());
         this.transport.setContainer(this);
     }
@@ -49,14 +52,14 @@ public class PipeIron extends Pipe {
 
     @Override
     public Recipe getRecipe() {
-        ItemStack item = new ItemStack(Material.STAINED_GLASS, 1, (byte) 8);
+        ItemStack item = new ItemStack(Material.STAINED_GLASS, 1, (byte) 10);
         ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName(ChatColor.YELLOW + "Iron Pipe");
+        itemMeta.setDisplayName(ChatColor.YELLOW + "Void Pipe");
         item.setItemMeta(itemMeta);
 
         ShapedRecipe recipe = new ShapedRecipe(item);
         recipe.shape("WGW");
-        recipe.setIngredient('W', Material.IRON_INGOT);
+        recipe.setIngredient('W', Material.ENDER_PEARL);
         recipe.setIngredient('G', Material.GLASS);
 
         return recipe;
@@ -64,7 +67,7 @@ public class PipeIron extends Pipe {
 
     @Override
     public String getName() {
-        return "IronPipe";
+        return "VoidPipe";
     }
 
     @Override
@@ -74,6 +77,11 @@ public class PipeIron extends Pipe {
 
     @Override
     public double getSpeed() {
-        return 0.1;
+        return 0.05;
+    }
+
+    @Override
+    public void addItem(MovingItem item, BlockFace input) {
+        item.destroy();
     }
 }

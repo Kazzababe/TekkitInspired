@@ -16,17 +16,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.Dispenser;
-import org.bukkit.material.MaterialData;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
-import ravioli.gravioli.tekkit.manager.MachineManager;
 
 public class MachineBlockBreaker extends MachineBase {
     @Override

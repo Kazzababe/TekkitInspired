@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -86,10 +87,12 @@ public class MachineQuarry extends MachineWithInventory {
         }
     }
 
+    @Override
     public HashMap<Integer, ItemStack> addItem(ItemStack item, BlockFace input) {
         return this.getInventory().addItem(item);
     }
 
+    @Override
     public void run() {
         if (this.stage != Stage.BROKEN) {
             if (this.fuelDuration <= 0) {
@@ -294,6 +297,7 @@ public class MachineQuarry extends MachineWithInventory {
         this.saveAsync();
     }
 
+    @Override
     public void onMachinePieceBreak(Block block) {
         if (block.hasMetadata("quarry-frame")) {
             block.removeMetadata("quarry-frame", Tekkit.getInstance());
@@ -302,6 +306,7 @@ public class MachineQuarry extends MachineWithInventory {
         }
     }
 
+    @Override
     public void onCreate() {
         Player player = Bukkit.getPlayer(this.getOwner());
         if (player == null) {
@@ -311,6 +316,7 @@ public class MachineQuarry extends MachineWithInventory {
         this.calculateCorners(CommonUtils.getCardinalDirection(player));
     }
 
+    @Override
     public void onDestroy() {
         for (Location loc : this.edge) {
             Block block = loc.getBlock();
@@ -337,6 +343,7 @@ public class MachineQuarry extends MachineWithInventory {
         }
     }
 
+    @Override
     public void onEnable() {
         this.updateTask(this.stage.getSpeed());
         this.updateEdge();
@@ -345,10 +352,11 @@ public class MachineQuarry extends MachineWithInventory {
         }
     }
 
+    @Override
     public Recipe getRecipe() {
         ItemStack item = new ItemStack(Material.IRON_BLOCK);
         ItemMeta itemMeta = item.getItemMeta();
-        itemMeta.setDisplayName("Quarry");
+        itemMeta.setDisplayName(ChatColor.YELLOW + "Quarry");
         item.setItemMeta(itemMeta);
 
         ShapedRecipe recipe = new ShapedRecipe(item);
@@ -360,10 +368,12 @@ public class MachineQuarry extends MachineWithInventory {
         return recipe;
     }
 
+    @Override
     public String getName() {
         return "Quarry";
     }
 
+    @Override
     public boolean doDrop() {
         return true;
     }
@@ -385,7 +395,7 @@ public class MachineQuarry extends MachineWithInventory {
     private void updateEdge() {
         this.edge = CommonUtils.getPointsInRegion(this.corner1, this.corner2);
         if (this.stage != Stage.BROKEN && this.stage != Stage.BUILDING) {
-            for (Location loc: this.edge) {
+            for (Location loc : this.edge) {
                 loc.getBlock().setMetadata("quarry-frame", new FixedMetadataValue(Tekkit.getInstance(), this));
                 loc.getBlock().setMetadata("machine", new FixedMetadataValue(Tekkit.getInstance(), this));
             }

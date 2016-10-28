@@ -39,6 +39,7 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.Machine;
+import ravioli.gravioli.tekkit.machine.machines.MachineCropomatic;
 import ravioli.gravioli.tekkit.machine.machines.MachineFilter;
 import ravioli.gravioli.tekkit.machine.transport.MovingItem;
 import ravioli.gravioli.tekkit.machine.transport.MovingItemSet;
@@ -115,60 +116,61 @@ public abstract class MachineBase implements Machine, Listener, Runnable {
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
-            }
-            String sql = "INSERT INTO `" + this.getName() + "` (";
-            LinkedHashMap<String, Field> types = new LinkedHashMap<String, Field>();
-            for (Field field : CommonUtils.getAllFields(this.getClass())) {
-                if (field.getAnnotation(Persistent.class) == null) {
-                    continue;
-                }
-                field.setAccessible(true);
-                sql = sql + "`" + field.getName() + "`, ";
-                types.put(field.getName(), field);
-            }
-            sql = sql.substring(0, sql.length() - 2) + ") VALUES (";
-            for (int i = 0; i < types.size(); ++i) {
-                sql = sql + "?, ";
-            }
-            sql = sql.substring(0, sql.length() - 2) + ")";
-            int count = 1;
-            try (PreparedStatement statement2 = db.getConnection().prepareStatement(sql, 1)) {
-                for (Map.Entry<String, Field> entrySet : types.entrySet()) {
-                    String name = entrySet.getKey();
-                    Field field = entrySet.getValue();
-                    Class type = field.getType();
-                    Object object = field.get(this);
-
-                    if (object == null) {
-                        statement2.setString(count, "null");
-                        count++;
+            } else {
+                String sql = "INSERT INTO `" + this.getName() + "` (";
+                LinkedHashMap<String, Field> types = new LinkedHashMap<String, Field>();
+                for (Field field : CommonUtils.getAllFields(this.getClass())) {
+                    if (field.getAnnotation(Persistent.class) == null) {
                         continue;
                     }
-                    if (type.isAssignableFrom(Integer.TYPE)) {
-                        statement2.setInt(count, (Integer) object);
-                    } else if (type.isAssignableFrom(Long.TYPE)) {
-                        statement2.setLong(count, (Long) object);
-                    } else if (type.isAssignableFrom(String.class)) {
-                        statement2.setString(count, (String) object);
-                    } else if (type.isAssignableFrom(Location.class)) {
-                        statement2.setString(count, CommonUtils.locationToString((Location) object));
-                    } else if (type.isAssignableFrom(Inventory.class)) {
-                        Inventory inventory = (Inventory) object;
-                        statement2.setString(count, InventoryUtils.itemStackArrayToBase64(inventory.getContents()));
-                    } else if (type.isAssignableFrom(Boolean.TYPE)) {
-                        statement2.setBoolean(count, (Boolean) object);
-                    } else {
-                        statement2.setString(count, object.toString());
-                    }
-                    count++;
+                    field.setAccessible(true);
+                    sql = sql + "`" + field.getName() + "`, ";
+                    types.put(field.getName(), field);
                 }
-                statement2.executeUpdate();
+                sql = sql.substring(0, sql.length() - 2) + ") VALUES (";
+                for (int i = 0; i < types.size(); ++i) {
+                    sql = sql + "?, ";
+                }
+                sql = sql.substring(0, sql.length() - 2) + ")";
+                int count = 1;
+                try (PreparedStatement statement2 = db.getConnection().prepareStatement(sql, new String[]{"id"})) {
+                    for (Map.Entry<String, Field> entrySet : types.entrySet()) {
+                        String name = entrySet.getKey();
+                        Field field = entrySet.getValue();
+                        Class type = field.getType();
+                        Object object = field.get(this);
 
-                ResultSet results1 = statement2.getGeneratedKeys();
-                results1.next();
-                this.id = results1.getInt(1);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+                        if (object == null) {
+                            statement2.setString(count, "null");
+                            count++;
+                            continue;
+                        }
+                        if (type.isAssignableFrom(Integer.TYPE)) {
+                            statement2.setInt(count, (Integer) object);
+                        } else if (type.isAssignableFrom(Long.TYPE)) {
+                            statement2.setLong(count, (Long) object);
+                        } else if (type.isAssignableFrom(String.class)) {
+                            statement2.setString(count, (String) object);
+                        } else if (type.isAssignableFrom(Location.class)) {
+                            statement2.setString(count, CommonUtils.locationToString((Location) object));
+                        } else if (type.isAssignableFrom(Inventory.class)) {
+                            Inventory inventory = (Inventory) object;
+                            statement2.setString(count, InventoryUtils.itemStackArrayToBase64(inventory.getContents()));
+                        } else if (type.isAssignableFrom(Boolean.TYPE)) {
+                            statement2.setBoolean(count, (Boolean) object);
+                        } else {
+                            statement2.setString(count, object.toString());
+                        }
+                        count++;
+                    }
+                    statement2.executeUpdate();
+
+                    ResultSet results1 = statement2.getGeneratedKeys();
+                    results1.next();
+                    this.id = results1.getInt(1);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -301,6 +303,10 @@ public abstract class MachineBase implements Machine, Listener, Runnable {
 
     public Block getBlock() {
         return this.location.getBlock();
+    }
+
+    public World getWorld() {
+        return this.location.getWorld();
     }
 
     protected void updateTask(long tickrate) {

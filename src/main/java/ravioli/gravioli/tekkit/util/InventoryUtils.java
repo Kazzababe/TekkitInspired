@@ -3,6 +3,8 @@ package ravioli.gravioli.tekkit.util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -65,5 +67,23 @@ public class InventoryUtils {
             }
         }
         return null;
+    }
+
+    public static boolean canFitIntoInventory(Inventory inventory, ItemStack... items) {
+        Inventory inv = Bukkit.createInventory(null, inventory.getSize());
+        inv.setContents(inventory.getContents().clone());
+
+        boolean fits = true;
+        for (ItemStack item : items.clone()) {
+            int amount = item.getAmount();
+            if (!inv.addItem(item).isEmpty()) {
+                fits = false;
+                item.setAmount(amount);
+                break;
+            }
+        }
+        inv = null;
+
+        return fits;
     }
 }

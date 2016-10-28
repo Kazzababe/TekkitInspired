@@ -17,18 +17,22 @@ public class PipeGold extends Pipe {
         this.transport.setContainer(this);
     }
 
+    @Override
     public void run() {
         this.transport.update();
     }
 
+    @Override
     public void onCreate() {
 
     }
 
+    @Override
     public void onDestroy() {
         this.transport.destroy();
     }
 
+    @Override
     public void onEnable() {
         this.updateTask(2);
         this.getLocation().getWorld().getNearbyEntities(this.getLocation(), 1.0, 2.0, 1.0).stream().filter(entity -> entity instanceof ArmorStand && !entity.hasMetadata("display") && ((ArmorStand) entity).isMarker()).forEach(entity -> entity.remove());
@@ -38,10 +42,12 @@ public class PipeGold extends Pipe {
         }
     }
 
+    @Override
     public ArrayList<ItemStack> getDrops() {
         return this.transport.getDrops();
     }
 
+    @Override
     public Recipe getRecipe() {
         ItemStack item = new ItemStack(Material.STAINED_GLASS, 1, (byte) 4);
         ItemMeta itemMeta = item.getItemMeta();
@@ -56,14 +62,17 @@ public class PipeGold extends Pipe {
         return recipe;
     }
 
+    @Override
     public String getName() {
         return "GoldPipe";
     }
 
+    @Override
     public boolean doDrop() {
         return true;
     }
 
+    @Override
     public double getSpeed() {
         return 0.15;
     }

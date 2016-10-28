@@ -28,7 +28,7 @@ public class Sqlite {
         this.connection = this.createConnection();
     }
 
-    public Connection getConnection() {
+    public synchronized Connection getConnection() {
         try {
             if (this.connection == null || this.connection.isClosed()) {
                 this.connection = this.createConnection();

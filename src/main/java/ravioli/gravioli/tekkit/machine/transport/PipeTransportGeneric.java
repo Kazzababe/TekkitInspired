@@ -17,12 +17,14 @@ import ravioli.gravioli.tekkit.machine.MachineBase;
 import ravioli.gravioli.tekkit.machine.MachineWithInventory;
 import ravioli.gravioli.tekkit.machine.machines.MachineFilter;
 import ravioli.gravioli.tekkit.util.CommonUtils;
+import ravioli.gravioli.tekkit.util.InventoryUtils;
 
 public class PipeTransportGeneric extends PipeTransport {
     private MovingItemSet getItems() {
         return this.container.items;
     }
 
+    @Override
     public void addItem(MovingItem item, BlockFace input) {
         this.getItems().getItems().add(item);
         item.input = input;
@@ -40,10 +42,12 @@ public class PipeTransportGeneric extends PipeTransport {
         }
     }
 
+    @Override
     public ArrayList<ItemStack> getDrops() {
         return this.getItems().getItems().stream().map(MovingItem::getItem).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    @Override
     public void update() {
         Iterator iterator = this.getItems().getItems().iterator();
         while (iterator.hasNext()) {
@@ -102,6 +106,7 @@ public class PipeTransportGeneric extends PipeTransport {
         }
     }
 
+    @Override
     public void destroy() {
         this.getItems().getItems().forEach(MovingItem::destroy);
     }
@@ -130,7 +135,9 @@ public class PipeTransportGeneric extends PipeTransport {
                     Block block = this.container.getBlock().getRelative(face);
                     MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
                     if (machine == null && block.getState() instanceof InventoryHolder) {
-                        result.add(face);
+                        if (InventoryUtils.canFitIntoInventory(((InventoryHolder) block.getState()).getInventory(), item.getItem())) {
+                            result.add(face);
+                        }
                     }
                 }
             }

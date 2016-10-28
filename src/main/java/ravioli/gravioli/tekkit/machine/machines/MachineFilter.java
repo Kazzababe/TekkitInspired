@@ -36,28 +36,57 @@ public class MachineFilter extends MachineWithInventory {
 
     @Override
     public void run() {
-        org.bukkit.material.Dispenser block = (org.bukkit.material.Dispenser) this.getBlock().getState().getData();
-        Block input = this.getBlock().getRelative(block.getFacing().getOppositeFace());
+        org.bukkit.material.Dispenser dispenser = (org.bukkit.material.Dispenser) this.getBlock().getState().getData();
 
-        if (input.getState() instanceof InventoryHolder) {
-            MachineBase machineCheck = Tekkit.getMachineManager().getMachineByLocation(input.getLocation());
-            if (machineCheck == null) {
+        Block input = this.getBlock().getRelative(dispenser.getFacing().getOppositeFace());
+        Block output = this.getBlock().getRelative(dispenser.getFacing());
+
+        MachineBase machine = Tekkit.getMachineManager().getMachineByLocation(input.getLocation());
+
+        Inventory outputInventory = null;
+        if (output.getState() instanceof InventoryHolder) {
+            InventoryHolder inventoryHolder = (InventoryHolder) output.getState();
+            outputInventory = inventoryHolder.getInventory();
+
+            MachineBase outputMachine = Tekkit.getMachineManager().getMachineByLocation(output.getLocation());
+            if (outputMachine != null && outputMachine instanceof MachineWithInventory && outputMachine.acceptableInput(dispenser.getFacing())) {
+                outputInventory = ((MachineWithInventory) outputMachine).getInventory();
+            }
+        }
+
+        Inventory inputInventory = null;
+        if (machine != null) {
+            if (machine.acceptableOutput(dispenser.getFacing())) {
+                if (machine instanceof MachineWithInventory) {
+                    MachineWithInventory inventoryMachine = (MachineWithInventory) machine;
+                    inputInventory = inventoryMachine.getInventory();
+                }
+            }
+        } else {
+            if (input.getState() instanceof InventoryHolder) {
                 InventoryHolder inventoryHolder = (InventoryHolder) input.getState();
-                Inventory inventory = inventoryHolder.getInventory();
-                if (!InventoryUtils.isInventoryEmpty(inventory)) {
-                    ItemStack item = null;
-                    for (ItemStack itemStack: inventory.getContents()) {
-                        if (itemStack != null) {
-                            if (this.canTransport(itemStack)) {
-                                item = itemStack;
-                                break;
+                inputInventory = inventoryHolder.getInventory();
+            }
+        }
+
+        if (inputInventory != null) {
+            if (!InventoryUtils.isInventoryEmpty(inputInventory)) {
+                ItemStack itemStack = null;
+                for (ItemStack item : inputInventory.getContents()) {
+                    if (item != null) {
+                        if (this.canTransport(item)) {
+                            if (outputInventory != null && !InventoryUtils.canFitIntoInventory(outputInventory, item)) {
+                                continue;
                             }
+                            itemStack = item;
+                            break;
                         }
                     }
-                    if (item != null) {
-                        this.routeItem(block.getFacing(), item);
-                        inventory.removeItem(item);
-                    }
+                }
+                if (itemStack != null) {
+                    System.out.println(itemStack);
+                    this.routeItem(dispenser.getFacing(), itemStack);
+                    inputInventory.removeItem(itemStack);
                 }
             }
         }
