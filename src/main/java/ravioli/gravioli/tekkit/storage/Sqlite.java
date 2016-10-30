@@ -11,7 +11,6 @@ import org.bukkit.inventory.Inventory;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.Machine;
 import ravioli.gravioli.tekkit.machine.MachineBase;
-import ravioli.gravioli.tekkit.machine.utilities.Persistent;
 import ravioli.gravioli.tekkit.util.CommonUtils;
 
 public class Sqlite {

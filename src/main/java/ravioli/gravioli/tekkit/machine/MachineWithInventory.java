@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -16,7 +15,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import ravioli.gravioli.tekkit.machine.utilities.Persistent;
+import ravioli.gravioli.tekkit.storage.Persistent;
 
 public abstract class MachineWithInventory extends MachineBase {
     @Persistent
@@ -65,6 +64,4 @@ public abstract class MachineWithInventory extends MachineBase {
     public Inventory getInventory() {
         return this.inventory;
     }
-
-    public abstract HashMap<Integer,ItemStack> addItem(ItemStack item, BlockFace input);
 }

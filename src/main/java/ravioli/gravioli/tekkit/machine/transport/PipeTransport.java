@@ -1,5 +1,6 @@
 package ravioli.gravioli.tekkit.machine.transport;
 
+import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.inventory.ItemStack;
 
@@ -18,5 +19,9 @@ public abstract class PipeTransport {
 
     public void setContainer(Pipe pipe) {
         this.container = pipe;
+    }
+
+    public World getWorld() {
+        return this.container.getWorld();
     }
 }

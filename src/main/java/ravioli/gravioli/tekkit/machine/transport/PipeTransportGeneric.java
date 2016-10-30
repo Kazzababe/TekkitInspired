@@ -1,23 +1,17 @@
 package ravioli.gravioli.tekkit.machine.transport;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.stream.Collectors;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.block.*;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
-import ravioli.gravioli.tekkit.machine.MachineWithInventory;
 import ravioli.gravioli.tekkit.machine.machines.MachineFilter;
+import ravioli.gravioli.tekkit.manager.MachineManager;
 import ravioli.gravioli.tekkit.util.CommonUtils;
-import ravioli.gravioli.tekkit.util.InventoryUtils;
 
 public class PipeTransportGeneric extends PipeTransport {
     private MovingItemSet getItems() {
@@ -26,30 +20,30 @@ public class PipeTransportGeneric extends PipeTransport {
 
     @Override
     public void addItem(MovingItem item, BlockFace input) {
-        this.getItems().getItems().add(item);
+        this.getItems().add(item);
+        
         item.input = input;
         item.output = this.getDestination(item);
 
         Location start = this.container.getLocation().clone().add(0.5, 0.5, 0.5);
         start.add(input.getModX() * 0.5, input.getModY() * 0.5, input.getModZ() * 0.5);
         CommonUtils.normalizeLocation(start);
+
         item.moveTo(start);
 
         if (item.output == null) {
-            item.getLocation().getWorld().dropItemNaturally(item.getLocation(), item.getItem());
-            item.destroy();
-            this.getItems().getItems().remove(item);
+            item.output = input.getOppositeFace();
         }
     }
 
     @Override
     public ArrayList<ItemStack> getDrops() {
-        return this.getItems().getItems().stream().map(MovingItem::getItem).collect(Collectors.toCollection(ArrayList::new));
+        return this.getItems().stream().map(MovingItem::getItemStack).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @Override
     public void update() {
-        Iterator iterator = this.getItems().getItems().iterator();
+        Iterator iterator = this.getItems().iterator();
         while (iterator.hasNext()) {
             MovingItem item = (MovingItem) iterator.next();
             if (item.output == null) {
@@ -74,46 +68,106 @@ public class PipeTransportGeneric extends PipeTransport {
                 item.reachedCenter = true;
                 CommonUtils.normalizeLocation(location, 2.0);
             }
-            if (this.endReached(item) || this.outOfBounds(item)) {
-                CommonUtils.normalizeLocation(location, 2.0);
-                item.moveTo(location);
+            if ((this.endReached(item) || this.outOfBounds(item)) && item.reachedCenter) {
                 iterator.remove();
 
                 Block block = this.container.getBlock().getRelative(item.output);
-                MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
-                if (machine != null && machine.acceptableInput(item.output.getOppositeFace())) {
-                    if (machine instanceof Pipe) {
-                        this.passItem(item, (Pipe) machine);
-                        continue;
-                    }
-                    if (machine instanceof MachineWithInventory) {
-                        HashMap<Integer, ItemStack> leftover = ((MachineWithInventory) machine).addItem(item.getItem(), item.output.getOppositeFace());
-                        leftover.values().forEach(drop -> block.getWorld().dropItemNaturally(block.getLocation(), drop));
-                        item.destroy();
-                        continue;
-                    }
-                }
-                if (block.getState() instanceof InventoryHolder) {
-                    InventoryHolder inventoryHolder = (InventoryHolder) block.getState();
-                    HashMap<Integer, ItemStack> leftover = inventoryHolder.getInventory().addItem(item.getItem());
-                    leftover.values().forEach(drop -> block.getWorld().dropItemNaturally(block.getLocation(), drop));
+                boolean success = this.injectItem(item, block);
+
+                if (!success) {
                     item.destroy();
-                    continue;
+                    block.getWorld().dropItemNaturally(location, item.getItemStack());
                 }
-                item.destroy();
-                block.getWorld().dropItemNaturally(location, item.getItem());
             }
         }
     }
 
     @Override
     public void destroy() {
-        this.getItems().getItems().forEach(MovingItem::destroy);
+        this.getItems().forEach(MovingItem::destroy);
+    }
+
+    private boolean injectItem(MovingItem item, Block block) {
+        ItemStack itemStack = item.getItemStack();
+
+        MachineBase machine = MachineManager.getMachineByLocation(block.getLocation());
+        if (machine != null) {
+            if (machine instanceof PipeReceiver) {
+                PipeReceiver receiver = (PipeReceiver) machine;
+                receiver.addItem(item, item.output.getOppositeFace());
+                item.destroy();
+
+                return true;
+            } else if (machine instanceof Pipe) {
+                this.passItem(item, (Pipe) machine);
+
+                return true;
+            }
+            return false;
+        }
+
+        if (block.getState() instanceof InventoryHolder) {
+            InventoryHolder inventoryBlock = (InventoryHolder) block.getState();
+
+            if (inventoryBlock instanceof Hopper || inventoryBlock instanceof BrewingStand || inventoryBlock instanceof Beacon) {
+                return false;
+            }
+
+            if (inventoryBlock instanceof Furnace) {
+                Furnace furnace = (Furnace) inventoryBlock;
+
+                ItemStack furnaceItem = null;
+                Boolean smelting = null;
+
+                if (item.output == BlockFace.UP) {
+                    furnaceItem = furnace.getInventory().getFuel();
+                    smelting = false;
+                } else if (item.output == BlockFace.DOWN) {
+                    furnaceItem = furnace.getInventory().getSmelting();
+                    smelting = true;
+                }
+                if (furnaceItem != null) {
+                    if (furnaceItem.isSimilar(itemStack)) {
+                        int total = furnaceItem.getAmount() + itemStack.getAmount();
+                        if (total <= furnaceItem.getMaxStackSize()) {
+                            furnaceItem.setAmount(total);
+                            item.destroy();
+
+                            return true;
+                        }
+                        furnaceItem.setAmount(furnaceItem.getMaxStackSize());
+                        itemStack.setAmount(total - furnaceItem.getMaxStackSize());
+
+                        return false;
+                    }
+                } else if (smelting != null) {
+                    if (smelting) {
+                        furnace.getInventory().setSmelting(itemStack);
+                    } else {
+                        furnace.getInventory().setFuel(itemStack);
+                    }
+                    item.destroy();
+
+                    return true;
+                }
+            } else {
+                ItemStack leftover = inventoryBlock.getInventory().addItem(itemStack).get(0);
+                if (leftover == null) {
+                    item.destroy();
+
+                    return true;
+                }
+                itemStack.setAmount(leftover.getAmount());
+            }
+        }
+        return false;
     }
 
     public void passItem(MovingItem item, Pipe pipe) {
-        item.reachedCenter = false;
-        pipe.addItem(item, item.output.getOppositeFace());
+        BlockFace input = item.output.getOppositeFace();
+        item.reset();
+        pipe.addItem(item, input);
+
     }
 
     public BlockFace getDestination(MovingItem item) {
@@ -123,8 +177,8 @@ public class PipeTransportGeneric extends PipeTransport {
         for (BlockFace face : faces) {
             if (this.container.acceptableOutput(face) && face != item.input) {
                 Block block = this.container.getBlock().getRelative(face);
-                MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
-                if (machine != null && machine.acceptableInput(face.getOppositeFace()) && machine instanceof MachineFilter && ((MachineFilter) machine).canTransport(item.getItem())) {
+                MachineBase machine = MachineManager.getMachineByLocation(block.getLocation());
+                if (machine != null && machine instanceof MachineFilter && ((MachineFilter) machine).canReceiveItem(item, face.getOppositeFace())) {
                     result.add(face);
                 }
             }
@@ -133,26 +187,8 @@ public class PipeTransportGeneric extends PipeTransport {
             for (BlockFace face : faces) {
                 if (this.container.acceptableOutput(face) && face != item.input) {
                     Block block = this.container.getBlock().getRelative(face);
-                    MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
-                    if (machine == null && block.getState() instanceof InventoryHolder) {
-                        if (InventoryUtils.canFitIntoInventory(((InventoryHolder) block.getState()).getInventory(), item.getItem())) {
-                            result.add(face);
-                        }
-                    }
-                }
-            }
-            for (BlockFace face : faces) {
-                if (this.container.acceptableOutput(face) && face != item.input) {
-                    Block block = this.container.getBlock().getRelative(face);
-                    MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
-                    if (machine != null && machine.acceptableInput(face.getOppositeFace()) && machine instanceof MachineWithInventory && !(machine instanceof MachineFilter)) {
-                        MachineWithInventory inventoryMachine = (MachineWithInventory) machine;
-                        Inventory inventory = Bukkit.createInventory(null, inventoryMachine.getInventory().getSize());
-                        inventory.setContents(inventoryMachine.getInventory().getContents());
-                        if (inventory.addItem(item.getItem()).isEmpty()) {
-                            result.add(face);
-                        }
-                        inventory = null;
+                    if (item.canInsertItem(block, face.getOppositeFace())) {
+                        result.add(face);
                     }
                 }
             }
@@ -160,7 +196,7 @@ public class PipeTransportGeneric extends PipeTransport {
                 for (BlockFace face : faces) {
                     if (this.container.acceptableOutput(face) && face != item.input) {
                         Block block = this.container.getBlock().getRelative(face);
-                        MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(block.getLocation());
+                        MachineBase machine = MachineManager.getMachineByLocation(block.getLocation());
                         if (machine != null && machine instanceof Pipe && machine.acceptableInput(face.getOppositeFace())) {
                             result.add(face);
                         }
@@ -168,10 +204,11 @@ public class PipeTransportGeneric extends PipeTransport {
                 }
             }
         }
-        Collections.shuffle(result);
         if (result.isEmpty()) {
             return null;
         }
+        Collections.shuffle(result);
+
         return result.get(0);
     }
 
@@ -185,6 +222,6 @@ public class PipeTransportGeneric extends PipeTransport {
     private boolean outOfBounds(MovingItem item) {
         Location mid = this.container.getLocation().clone().add(0.5, 0.5, 0.5);
         CommonUtils.normalizeLocation(mid, 2.0);
-        return item.getLocation().distance(mid) > 0.5;
+        return item.getLocation().distance(mid) > 0.6;
     }
 }

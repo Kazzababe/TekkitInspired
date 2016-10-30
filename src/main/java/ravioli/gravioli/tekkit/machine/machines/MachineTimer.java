@@ -38,23 +38,18 @@ public class MachineTimer extends MachineBase {
     }
 
     @Override
-    public void onCreate() {}
-
-    @Override
-    public void onDestroy() {}
-
-    @Override
     public void onEnable() {
+        if (!this.getBlock().getType().name().contains("DIODE")) {
+            this.destroy(false);
+            return;
+        }
+
         this.updateTask(5 * this.delay);
 
         Diode diode = (Diode) getBlock().getState().getData();
         BlockFace facing = diode.getFacing();
         this.facing = (facing == BlockFace.SOUTH ? 2 : facing == BlockFace.EAST ? 1 : facing == BlockFace.NORTH ? 0 : 3);
         this.delay = diode.getDelay();
-
-        if (!this.getBlock().getType().name().contains("DIODE")) {
-            this.destroy(false);
-        }
     }
 
     @Override

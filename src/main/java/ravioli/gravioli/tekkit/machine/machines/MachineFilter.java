@@ -16,14 +16,28 @@ import org.bukkit.inventory.meta.ItemMeta;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
 import ravioli.gravioli.tekkit.machine.MachineWithInventory;
+import ravioli.gravioli.tekkit.machine.transport.MovingItem;
+import ravioli.gravioli.tekkit.machine.transport.PipeReceiver;
+import ravioli.gravioli.tekkit.manager.MachineManager;
 import ravioli.gravioli.tekkit.util.InventoryUtils;
 
-public class MachineFilter extends MachineWithInventory {
+public class MachineFilter extends MachineWithInventory implements PipeReceiver {
     public MachineFilter() {
         super("Filter Items", 9);
     }
 
     @Override
+    public boolean canReceiveItem(MovingItem item, BlockFace input) {
+        return this.acceptableInput(input) && this.canTransport(item.getItemStack());
+    }
+
+    @Override
+    public void addItem(MovingItem item, BlockFace input) {
+        if (this.canTransport(item.getItemStack())) {
+            this.routeItem(input.getOppositeFace(), item.getItemStack());
+        }
+    }
+
     public HashMap<Integer, ItemStack> addItem(ItemStack item, BlockFace input) {
         HashMap<Integer, ItemStack> leftover = new HashMap<Integer, ItemStack>();
         if (this.canTransport(item)) {
@@ -41,14 +55,14 @@ public class MachineFilter extends MachineWithInventory {
         Block input = this.getBlock().getRelative(dispenser.getFacing().getOppositeFace());
         Block output = this.getBlock().getRelative(dispenser.getFacing());
 
-        MachineBase machine = Tekkit.getMachineManager().getMachineByLocation(input.getLocation());
+        MachineBase machine = MachineManager.getMachineByLocation(input.getLocation());
 
         Inventory outputInventory = null;
         if (output.getState() instanceof InventoryHolder) {
             InventoryHolder inventoryHolder = (InventoryHolder) output.getState();
             outputInventory = inventoryHolder.getInventory();
 
-            MachineBase outputMachine = Tekkit.getMachineManager().getMachineByLocation(output.getLocation());
+            MachineBase outputMachine = MachineManager.getMachineByLocation(output.getLocation());
             if (outputMachine != null && outputMachine instanceof MachineWithInventory && outputMachine.acceptableInput(dispenser.getFacing())) {
                 outputInventory = ((MachineWithInventory) outputMachine).getInventory();
             }
@@ -84,7 +98,6 @@ public class MachineFilter extends MachineWithInventory {
                     }
                 }
                 if (itemStack != null) {
-                    System.out.println(itemStack);
                     this.routeItem(dispenser.getFacing(), itemStack);
                     inputInventory.removeItem(itemStack);
                 }
@@ -106,17 +119,15 @@ public class MachineFilter extends MachineWithInventory {
     }
 
     @Override
-    public void onDestroy() {}
-
-    @Override
     public void onEnable() {
+        if (this.getBlock().getType() != Material.DISPENSER) {
+            this.destroy(false);
+            return;
+        }
+
         org.bukkit.material.Dispenser dispenser = (org.bukkit.material.Dispenser) this.getBlock().getState().getData();
         this.acceptableInputs[dispenser.getFacing().getOppositeFace().ordinal()] = true;
         this.acceptableOutputs[dispenser.getFacing().ordinal()] = true;
-
-        if (this.getBlock().getType() != Material.DISPENSER) {
-            this.destroy(false);
-        }
     }
 
     @Override

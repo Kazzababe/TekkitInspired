@@ -1,4 +1,4 @@
-package ravioli.gravioli.tekkit.machine.utilities;
+package ravioli.gravioli.tekkit.machine.utils;
 
 import java.util.HashMap;
 import java.util.Map;

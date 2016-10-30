@@ -2,7 +2,7 @@ package ravioli.gravioli.tekkit.machine.transport;
 
 import org.bukkit.block.BlockFace;
 import ravioli.gravioli.tekkit.machine.MachineBase;
-import ravioli.gravioli.tekkit.machine.utilities.Persistent;
+import ravioli.gravioli.tekkit.storage.Persistent;
 
 public abstract class Pipe extends MachineBase {
     @Persistent

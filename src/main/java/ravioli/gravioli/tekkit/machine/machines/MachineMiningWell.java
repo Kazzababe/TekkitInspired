@@ -17,8 +17,9 @@ import org.bukkit.metadata.FixedMetadataValue;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
 import ravioli.gravioli.tekkit.machine.MachineWithInventory;
-import ravioli.gravioli.tekkit.machine.utilities.Fuel;
-import ravioli.gravioli.tekkit.machine.utilities.Persistent;
+import ravioli.gravioli.tekkit.machine.utils.Fuel;
+import ravioli.gravioli.tekkit.manager.MachineManager;
+import ravioli.gravioli.tekkit.storage.Persistent;
 
 public class MachineMiningWell extends MachineWithInventory {
     @Persistent
@@ -49,13 +50,12 @@ public class MachineMiningWell extends MachineWithInventory {
     }
 
     @Override
-    public void onCreate() {}
-
-    @Override
-    public void onDestroy() {}
-
-    @Override
     public void onEnable() {
+        if (this.getBlock().getType() != Material.IRON_BLOCK) {
+            this.destroy(false);
+            return;
+        }
+
         this.updateTask(20);
         if (this.height > 0) {
             for (int i = 1; i <= this.height; ++i) {
@@ -64,10 +64,6 @@ public class MachineMiningWell extends MachineWithInventory {
                     loc.getBlock().setMetadata("machine", new FixedMetadataValue(Tekkit.getInstance(), this));
                 }
             }
-        }
-
-        if (this.getBlock().getType() != Material.IRON_BLOCK) {
-            this.destroy(false);
         }
     }
 
@@ -82,7 +78,7 @@ public class MachineMiningWell extends MachineWithInventory {
             this.fuelDuration -= 1000;
             this.height++;
 
-            MachineBase machine = Tekkit.getMachineManager().getMachineByLocation(loc);
+            MachineBase machine = MachineManager.getMachineByLocation(loc);
             if (machine != null) {
                 machine.getDrops().forEach(drop -> this.routeItem(BlockFace.UP, drop));
                 this.routeItem(BlockFace.UP, machine.getRecipe().getResult());
@@ -123,11 +119,5 @@ public class MachineMiningWell extends MachineWithInventory {
     @Override
     public boolean doDrop() {
         return true;
-    }
-
-    @Override
-    public HashMap<Integer, ItemStack> addItem(ItemStack item, BlockFace input) {
-        HashMap<Integer, ItemStack> items = this.getInventory().addItem(item);
-        return items;
     }
 }

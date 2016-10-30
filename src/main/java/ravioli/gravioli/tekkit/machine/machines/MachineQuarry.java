@@ -20,8 +20,9 @@ import org.bukkit.metadata.FixedMetadataValue;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
 import ravioli.gravioli.tekkit.machine.MachineWithInventory;
-import ravioli.gravioli.tekkit.machine.utilities.Fuel;
-import ravioli.gravioli.tekkit.machine.utilities.Persistent;
+import ravioli.gravioli.tekkit.machine.utils.Fuel;
+import ravioli.gravioli.tekkit.manager.MachineManager;
+import ravioli.gravioli.tekkit.storage.Persistent;
 import ravioli.gravioli.tekkit.util.CommonUtils;
 
 public class MachineQuarry extends MachineWithInventory {
@@ -88,11 +89,6 @@ public class MachineQuarry extends MachineWithInventory {
     }
 
     @Override
-    public HashMap<Integer, ItemStack> addItem(ItemStack item, BlockFace input) {
-        return this.getInventory().addItem(item);
-    }
-
-    @Override
     public void run() {
         if (this.stage != Stage.BROKEN) {
             if (this.fuelDuration <= 0) {
@@ -115,7 +111,7 @@ public class MachineQuarry extends MachineWithInventory {
                 }
                 if (block.getType() != Material.AIR) {
                     ArrayList<ItemStack> drops = new ArrayList<ItemStack> ();
-                    MachineBase machine = Tekkit.getMachineManager().getMachineByLocation(loc);
+                    MachineBase machine = MachineManager.getMachineByLocation(loc);
                     if (machine != null) {
                         drops.addAll(machine.getDrops());
                         if (machine.doDrop()) {
@@ -163,7 +159,7 @@ public class MachineQuarry extends MachineWithInventory {
                 }
                 if (block.getType() != Material.AIR) {
                     ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
-                    MachineBase machine = Tekkit.getInstance().getMachineManager().getMachineByLocation(loc);
+                    MachineBase machine = MachineManager.getMachineByLocation(loc);
                     if (machine != null) {
                         drops.addAll(machine.getDrops());
                         if (machine.doDrop()) {
@@ -242,7 +238,7 @@ public class MachineQuarry extends MachineWithInventory {
                 this.breakMachine();
                 return;
             }
-            MachineBase machine = Tekkit.getMachineManager().getMachineByLocation(target);
+            MachineBase machine = MachineManager.getMachineByLocation(target);
             if (machine != null) {
                 drops.addAll(machine.getDrops());
                 if (machine.doDrop()) {
@@ -289,6 +285,10 @@ public class MachineQuarry extends MachineWithInventory {
         for (int y = 1; y <= height + this.armY; y++) {
             this.arm.add(this.corner2.clone().add(diffX + this.armX * diffX, -y, diffZ + this.armZ * diffZ));
         }
+        for (Location loc : this.arm) {
+            loc.getBlock().setMetadata("quarry-arm", new FixedMetadataValue(Tekkit.getInstance(), this));
+            loc.getBlock().setMetadata("machine", new FixedMetadataValue(Tekkit.getInstance(), this));
+        }
     }
 
     private void breakMachine() {
@@ -320,9 +320,9 @@ public class MachineQuarry extends MachineWithInventory {
     public void onDestroy() {
         for (Location loc : this.edge) {
             Block block = loc.getBlock();
-            block.setType(Material.AIR);
             if (block.hasMetadata("quarry-frame")) {
                 block.removeMetadata("quarry-frame", Tekkit.getInstance());
+                block.setType(Material.AIR);
             }
             if (block.hasMetadata("machine")) {
                 block.removeMetadata("machine", Tekkit.getInstance());
@@ -330,12 +330,9 @@ public class MachineQuarry extends MachineWithInventory {
         }
         for (Location loc : this.arm) {
             Block block = loc.getBlock();
-            block.setType(Material.AIR);
-            if (block.hasMetadata("machine")) {
-                block.removeMetadata("machine", Tekkit.getInstance());
-            }
             if (block.hasMetadata("quarry-arm")) {
                 block.removeMetadata("quarry-arm", Tekkit.getInstance());
+                block.setType(Material.AIR);
             }
             if (block.hasMetadata("machine")) {
                 block.removeMetadata("machine", Tekkit.getInstance());
@@ -345,6 +342,11 @@ public class MachineQuarry extends MachineWithInventory {
 
     @Override
     public void onEnable() {
+        if (this.getBlock().getType() != Material.IRON_BLOCK) {
+            this.destroy(false);
+            return;
+        }
+
         this.updateTask(this.stage.getSpeed());
         this.updateEdge();
         if (this.stage == Stage.MINING || this.stage == Stage.BROKEN) {
@@ -394,7 +396,7 @@ public class MachineQuarry extends MachineWithInventory {
 
     private void updateEdge() {
         this.edge = CommonUtils.getPointsInRegion(this.corner1, this.corner2);
-        if (this.stage != Stage.BROKEN && this.stage != Stage.BUILDING) {
+        if (this.stage != Stage.BUILDING) {
             for (Location loc : this.edge) {
                 loc.getBlock().setMetadata("quarry-frame", new FixedMetadataValue(Tekkit.getInstance(), this));
                 loc.getBlock().setMetadata("machine", new FixedMetadataValue(Tekkit.getInstance(), this));

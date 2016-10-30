@@ -24,6 +24,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.Dispenser;
 import ravioli.gravioli.tekkit.Tekkit;
 import ravioli.gravioli.tekkit.machine.MachineBase;
+import ravioli.gravioli.tekkit.manager.MachineManager;
 
 public class MachineBlockBreaker extends MachineBase {
     @Override
@@ -31,9 +32,6 @@ public class MachineBlockBreaker extends MachineBase {
         org.bukkit.block.Dispenser block = (org.bukkit.block.Dispenser) this.getLocation().getBlock().getState();
         block.getInventory().setItem(4, new ItemStack(Material.PAPER));
     }
-
-    @Override
-    public void onDestroy() {}
 
     @Override
     public void onEnable() {
@@ -49,7 +47,7 @@ public class MachineBlockBreaker extends MachineBase {
 
         if (facing.getType() != Material.AIR && facing.getType() != Material.BEDROCK && facing.getType() != Material.OBSIDIAN) {
             HashSet<ItemStack> drops = new HashSet<ItemStack>();
-            MachineBase machineCheck = Tekkit.getInstance().getMachineManager().getMachineByLocation(facing.getLocation());
+            MachineBase machineCheck = MachineManager.getMachineByLocation(facing.getLocation());
             if (machineCheck != null) {
                 drops.addAll(machineCheck.getDrops());
                 if (machineCheck.doDrop()) {

@@ -41,11 +41,6 @@ public class MachineCropomatic extends MachineWithInventory {
     }
 
     @Override
-    public HashMap<Integer, ItemStack> addItem(ItemStack item, BlockFace input) {
-        return new HashMap<Integer, ItemStack>();
-    }
-
-    @Override
     public void run() {
         Iterator<Location> iterator = this.queue.iterator();
         while(iterator.hasNext()) {
@@ -65,17 +60,12 @@ public class MachineCropomatic extends MachineWithInventory {
     }
 
     @Override
-    public void onCreate() {
-
-    }
-
-    @Override
-    public void onDestroy() {
-
-    }
-
-    @Override
     public void onEnable() {
+        if (this.getBlock().getType() != Material.IRON_BLOCK) {
+            this.destroy(false);
+            return;
+        }
+
         this.updateTask(20);
 
         this.corner1 = this.getLocation().clone().add(10, 10, 10);
