@@ -1,0 +1,4 @@
+name: Tekkit
+description: Tekkit-inspired plugin for Spigot/Bukkit
+version: 0.1
+main: ravioli.gravioli.tekkit.Tekkit
